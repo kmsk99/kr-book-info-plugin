@@ -26,7 +26,7 @@ export default class KrBookInfo extends Plugin {
 				// change file name
 				this.app.fileManager.renameFile(
 					this.app.vault.getAbstractFileByPath(file.path),
-					file.parent.path + title + ".md"
+					file.parent.path + file.parent.path && "/" + title + ".md"
 				);
 
 				new Notice("Success!");
