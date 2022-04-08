@@ -1,10 +1,10 @@
 {
-	"id": "obsidian-sample-plugin",
-	"name": "Sample Plugin",
+	"id": "kr-book-info-plugin",
+	"name": "Book Info Plugin",
 	"version": "1.0.1",
 	"minAppVersion": "0.12.0",
-	"description": "This is a sample plugin for Obsidian. This plugin demonstrates some of the capabilities of the Obsidian API.",
-	"author": "Obsidian",
-	"authorUrl": "https://obsidian.md",
+	"description": "Yes24를 크롤링하여 도서 정보를 가져오는 플러그인입니다.",
+	"author": "kmsk99",
+	"authorUrl": "github.com/kmsk99",
 	"isDesktopOnly": false
 }
