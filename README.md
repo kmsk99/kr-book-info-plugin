@@ -1,73 +1,33 @@
-## Obsidian Sample Plugin
+## KR Book Info Plugin
 
-This is a sample plugin for Obsidian (https://obsidian.md).
+-   This plugin imports the book information of Yes24 into Front Matter in the document.
+-   이 플러그인은 예스24의 책 정보를 문서 내 프론트매터로 가져옵니다.
+-   An example of the frontmatter format is as follows
+-   프론트매터 형식의 예시는 아래와 같습니다
 
-This project uses Typescript to provide type checking and documentation.
-The repo depends on the latest plugin API (obsidian.d.ts) in Typescript Definition format, which contains TSDoc comments describing what it does.
+```
+---
+created: 2022-04-00 00:00
+tag: 📚독서 국내도서 경제경영 경제 경제상식/경제이야기
+title: 부의 추월차선：부자들이 말해 주지 않는 진정한 부를 얻는 방법
+author: 엠제이 드마코, 신소영
+category: 경제경영
+total_page: 392
+publish_date: 2022-02-00
+cover_url: http://image.yes24.com/goods/106369008/XL
+status: 🟩 완료
+start_read_date: 2022-04-00
+finish_read_date: 2022-04-00
+my_rate:
+book_note: ❌
+---
 
-**Note:** The Obsidian API is still in early alpha and is subject to change at any time!
+# 부의 추월차선：부자들이 말해 주지 않는 진정한 부를 얻는 방법
+```
 
-This sample plugin demonstrates some of the basic functionality the plugin API can do.
-- Changes the default font color to red using `styles.css`.
-- Adds a ribbon icon, which shows a Notice when clicked.
-- Adds a command "Open Sample Modal" which opens a Modal.
-- Adds a plugin setting tab to the settings page.
-- Registers a global click event and output 'click' to the console.
-- Registers a global interval which logs 'setInterval' to the console.
-
-### First time developing plugins?
-
-Quick starting guide for new plugin devs:
-
-- Check if [someone already developed a plugin for what you want](https://obsidian.md/plugins)! There might be an existing plugin similar enough that you can partner up with.
-- Make a copy of this repo as a template with the "Use this template" button (login to GitHub if you don't see it).
-- Clone your repo to a local development folder. For convenience, you can place this folder in your `.obsidian/plugins/your-plugin-name` folder.
-- Install NodeJS, then run `npm i` in the command line under your repo folder.
-- Run `npm run dev` to compile your plugin from `main.ts` to `main.js`.
-- Make changes to `main.ts` (or create new `.ts` files). Those changes should be automatically compiled into `main.js`.
-- Reload Obsidian to load the new version of your plugin.
-- Enable plugin in settings window.
-- For updates to the Obsidian API run `npm update` in the command line under your repo folder.
-
-### Releasing new releases
-
-- Update your `manifest.json` with your new version number, such as `1.0.1`, and the minimum Obsidian version required for your latest release.
-- Update your `versions.json` file with `"new-plugin-version": "minimum-obsidian-version"` so older versions of Obsidian can download an older version of your plugin that's compatible.
-- Create new GitHub release using your new version number as the "Tag version". Use the exact version number, don't include a prefix `v`. See here for an example: https://github.com/obsidianmd/obsidian-sample-plugin/releases
-- Upload the files `manifest.json`, `main.js`, `styles.css` as binary attachments. Note: The manifest.json file must be in two places, first the root path of your repository and also in the release.
-- Publish the release.
-
-> You can simplify the version bump process by running `npm version patch`, `npm version minor` or `npm version major` after updating `minAppVersion` manually in `manifest.json`.
-> The command will bump version in `manifest.json` and `package.json`, and add the entry for the new version to `versions.json`
-
-### Adding your plugin to the community plugin list
-
-- Check https://github.com/obsidianmd/obsidian-releases/blob/master/plugin-review.md
-- Publish an initial version.
-- Make sure you have a `README.md` file in the root of your repo.
-- Make a pull request at https://github.com/obsidianmd/obsidian-releases to add your plugin.
-
-### How to use
-
-- Clone this repo.
-- `npm i` or `yarn` to install dependencies
-- `npm run dev` to start compilation in watch mode.
-
-### Manually installing the plugin
-
-- Copy over `main.js`, `styles.css`, `manifest.json` to your vault `VaultFolder/.obsidian/plugins/your-plugin-id/`.
-
-### Improve code quality with eslint (optional)
-- [ESLint](https://eslint.org/) is a tool that analyzes your code to quickly find problems. You can run ESLint against your plugin to find common bugs and ways to improve your code. 
-- To use eslint with this project, make sure to install eslint from terminal:
-  - `npm install -g eslint`
-- To use eslint to analyze this project use this command:
-  - `eslint main.ts`
-  - eslint will then create a report with suggestions for code improvement by file and line number.
-- If your source code is in a folder, such as `src`, you can use eslint with this command to analyze all files in that folder:
-  - `eslint .\src\`
-
-
-### API Documentation
-
-See https://github.com/obsidianmd/obsidian-api
+-   Click the Add Book Info button on the left to run it
+-   왼쪽의 Add Book Info 버튼을 눌러 실행합니다
+-   When executed, the title and content of the document are changed, and a Front Matter is inserted over the existing content.
+-   실행 시 문서 제목과 내용이 변경되며, 기존 내용 위에 프론트매터가 삽입됩니다.
+-   Execution time is around 5 to 10 seconds.
+-   실행 시간은 5 ~ 10초 내외입니다.
