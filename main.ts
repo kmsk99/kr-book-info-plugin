@@ -23,10 +23,13 @@ export default class KrBookInfo extends Plugin {
 				// join Frontmatter And text
 				this.app.vault.modify(file, result + "\n\n" + text);
 
+				console.log(file.parent.path);
+				console.log(file.parent.path + "/" + title + ".md");
+
 				// change file name
 				this.app.fileManager.renameFile(
 					this.app.vault.getAbstractFileByPath(file.path),
-					file.parent.path + file.parent.path && "/" + title + ".md"
+					file.parent.path + "/" + title + ".md"
 				);
 
 				new Notice("Success!");
