@@ -1,6 +1,6 @@
 {
 	"id": "kr-book-info-plugin",
-	"name": "Book Info Plugin",
+	"name": "Korean Book Info Plugin",
 	"version": "1.0.1",
 	"minAppVersion": "0.12.0",
 	"description": "Yes24를 크롤링하여 도서 정보를 가져오는 플러그인입니다.",
