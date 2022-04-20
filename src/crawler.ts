@@ -1,18 +1,23 @@
-import axios from "axios";
-import { load } from "cheerio";
+import { requestUrl, stringifyYaml } from "obsidian";
 
 // search keyword and return yes24 search result from 국내도서
 const searchBookUrl = async (keyword: string) => {
 	keyword = encodeURI(keyword);
 	try {
-		const html = await axios.get(
-			`https://cors-anywhere-kmsk99.herokuapp.com/http://www.yes24.com/Product/Search?domain=BOOK&query=` +
-				keyword
-		);
-		const $ = load(html.data);
-		const bookUrl = $(
-			"#yesSchList > li:nth-child(1) > div > div.item_info > div.info_row.info_name > a.gd_name"
-		).attr("href");
+		const response = await requestUrl({
+			url:
+				"http://www.yes24.com/Product/Search?domain=BOOK&query=" +
+				keyword,
+		});
+
+		const parser = new DOMParser();
+		const html = parser.parseFromString(response.text, "text/html");
+
+		const bookUrl = html
+			.querySelector(
+				"#yesSchList > li:nth-child(1) > div > div.item_info > div.info_row.info_name > a.gd_name"
+			)
+			.getAttribute("href");
 
 		return bookUrl;
 	} catch (err) {
@@ -24,14 +29,20 @@ const searchBookUrl = async (keyword: string) => {
 const totalSearchBookUrl = async (keyword: string) => {
 	keyword = encodeURI(keyword);
 	try {
-		const html = await axios.get(
-			`https://cors-anywhere-kmsk99.herokuapp.com/http://www.yes24.com/Product/Search?domain=ALL&query=` +
-				keyword
-		);
-		const $ = load(html.data);
-		const bookUrl = $(
-			"#yesSchList > li:nth-child(1) > div > div.item_info > div.info_row.info_name > a.gd_name"
-		).attr("href");
+		const response = await requestUrl({
+			url:
+				"http://www.yes24.com/Product/Search?domain=ALL&query=" +
+				keyword,
+		});
+
+		const parser = new DOMParser();
+		const html = parser.parseFromString(response.text, "text/html");
+
+		const bookUrl = html
+			.querySelector(
+				"#yesSchList > li:nth-child(1) > div > div.item_info > div.info_row.info_name > a.gd_name"
+			)
+			.getAttribute("href");
 
 		return bookUrl;
 	} catch (err) {
@@ -55,35 +66,39 @@ const getBookUrl = async (keyword: string) => {
 const getBookInfoResult = async (bookUrl: string) => {
 	bookUrl = encodeURI(bookUrl);
 	try {
-		const html = await axios.get(
-			`https://cors-anywhere-kmsk99.herokuapp.com/http://www.yes24.com` +
-				bookUrl
-		);
-		const $ = load(html.data);
+		const response = await requestUrl({
+			url: `http://www.yes24.com` + bookUrl,
+		});
+
+		const parser = new DOMParser();
+		const html = parser.parseFromString(response.text, "text/html");
+
 		const tags: string[] = [];
 
-		$(
+		html.querySelectorAll(
 			"#infoset_goodsCate > div.infoSetCont_wrap > dl:nth-child(1) > dd > ul > li > a"
-		).each((_, elem) => {
-			tags.push($(elem).text().replace(/(\s*)/g, ""));
+		).forEach((value) => {
+			tags.push(value.getText().replace(/(\s*)/g, ""));
 		});
 
 		const tag = [...new Set(tags)];
 
-		let title = $(
-			"#yDetailTopWrap > div.topColRgt > div.gd_infoTop > div > h2"
-		)
-			.text()
+		let title = html
+			.querySelector(
+				"#yDetailTopWrap > div.topColRgt > div.gd_infoTop > div > h2"
+			)
+			.getText()
 			.replace(/\(.*\)/gi, "")
 			.replace(/\[.*\]/gi, "")
 			.replace(":", "：")
 			.replace("?", "？")
 			.trim();
 
-		const subTitle = $(
-			"#yDetailTopWrap > div.topColRgt > div.gd_infoTop > div > h3"
-		)
-			.text()
+		const subTitle = html
+			.querySelector(
+				"#yDetailTopWrap > div.topColRgt > div.gd_infoTop > div > h3"
+			)
+			.getText()
 			.replace(":", "：")
 			.replace("?", "？")
 			.trim();
@@ -93,60 +108,66 @@ const getBookInfoResult = async (bookUrl: string) => {
 		}
 
 		const author: string[] = [];
-		$(
-			"#yDetailTopWrap > div.topColRgt > div.gd_infoTop > span.gd_pubArea > span.gd_auth"
-		)
-			.children()
-			.each((_, elem) => {
-				if ($(elem).text()[0] !== "\n") {
-					author.push($(elem).text());
-				}
-			});
 
-		let page = +$(
-			"#infoset_specific > div.infoSetCont_wrap > div > table > tbody > tr:nth-child(2) > td"
-		)
-			.text()
+		html.querySelectorAll(
+			"#yDetailTopWrap > div.topColRgt > div.gd_infoTop > span.gd_pubArea > span.gd_auth"
+		).forEach((value) => {
+			author.push(value.getText().trim());
+		});
+
+		let page = +html
+			.querySelector(
+				"#infoset_specific > div.infoSetCont_wrap > div > table > tbody > tr:nth-child(2) > td"
+			)
+			.getText()
 			.split(" ")[0]
 			.slice(0, -1);
 
 		if (isNaN(page)) page = 0;
 
-		const publishDate = $(
-			"#yDetailTopWrap > div.topColRgt > div.gd_infoTop > span.gd_pubArea > span.gd_date"
-		)
-			.text()
+		const publishDate = html
+			.querySelector(
+				"#yDetailTopWrap > div.topColRgt > div.gd_infoTop > span.gd_pubArea > span.gd_date"
+			)
+			.getText()
 			.split(" ")
 			.map((v) => v.slice(0, -1))
 			.join("-");
 
-		const coverUrl = $(
-			"#yDetailTopWrap > div.topColLft > div > span > em > img"
-		).attr("src");
+		const coverUrl = html
+			.querySelector(
+				"#yDetailTopWrap > div.topColLft > div > span > em > img"
+			)
+			.getAttribute("src");
+
+		const frontmatter = {
+			created: `${
+				new Date(+new Date() + 3240 * 10000)
+					.toISOString()
+					.split("T")[0] +
+				" " +
+				new Date().toTimeString().split(" ")[0].slice(0, 5)
+			}`,
+			tag: `📚독서 ${tag.join(" ")}`,
+			title: `${title}`,
+			author: `${author.join(", ")}`,
+			category: `${tag[1]}`,
+			total_page: page,
+			publish_date: `${publishDate}`,
+			cover_url: `${coverUrl}`,
+			status: `🟩 완료`,
+			start_read_date: `${
+				new Date(+new Date() + 3240 * 10000).toISOString().split("T")[0]
+			}`,
+			finish_read_date: `${
+				new Date(+new Date() + 3240 * 10000).toISOString().split("T")[0]
+			}`,
+			my_rate: 0,
+			book_note: `❌`,
+		};
 
 		const result = `---
-created: ${
-			new Date(+new Date() + 3240 * 10000).toISOString().split("T")[0] +
-			" " +
-			new Date().toTimeString().split(" ")[0].slice(0, 5)
-		}
-tag: 📚독서 ${tag.join(" ")}
-title: ${title}
-author: ${author.join(", ")}
-category: ${tag[1]}
-total_page: ${page}
-publish_date: ${publishDate}
-cover_url: ${coverUrl}
-status: 🟩 완료
-start_read_date: ${
-			new Date(+new Date() + 3240 * 10000).toISOString().split("T")[0]
-		}
-finish_read_date: ${
-			new Date(+new Date() + 3240 * 10000).toISOString().split("T")[0]
-		}
-my_rate: 
-book_note: ❌
----
+${stringifyYaml(frontmatter)}---
 
 # ${title}`;
 

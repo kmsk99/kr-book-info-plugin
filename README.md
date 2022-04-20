@@ -18,7 +18,7 @@ cover_url: http://image.yes24.com/goods/106369008/XL
 status: 🟩 완료
 start_read_date: 2022-04-00
 finish_read_date: 2022-04-00
-my_rate:
+my_rate: 0
 book_note: ❌
 ---
 

@@ -8,11 +8,16 @@ export default class KrBookInfo extends Plugin {
 			"lines-of-text",
 			"Add Book Info",
 			async (evt: MouseEvent) => {
-				// Called when the user clicks the icon.
-				new Notice("Loading...");
-
 				// check current active file
 				const file = this.app.workspace.getActiveFile();
+
+				if (!file) {
+					new Notice("There's no active file, Please open new file");
+					return;
+				}
+
+				// Called when the user clicks the icon.
+				new Notice("Loading...");
 
 				// Search book through current file's title
 				const [title, result] = await getBook(file.basename);
@@ -23,16 +28,21 @@ export default class KrBookInfo extends Plugin {
 				// join Frontmatter And text
 				this.app.vault.modify(file, result + "\n\n" + text);
 
-				console.log(file.parent.path);
-				console.log(file.parent.path + "/" + title + ".md");
+				const regExp =
+					/[\{\}\[\]\/?.,;:|\)*~`!^\-+<>@\#$%&\\\=\(\'\"]/gi;
+
+				// sanitizing the title
+				const fileName = title.replace(regExp, "");
 
 				// change file name
 				this.app.fileManager.renameFile(
 					this.app.vault.getAbstractFileByPath(file.path),
-					file.parent.path + "/" + title + ".md"
+					file.parent.path + "/" + fileName + ".md"
 				);
 
 				new Notice("Success!");
+
+				return;
 			}
 		);
 	}
