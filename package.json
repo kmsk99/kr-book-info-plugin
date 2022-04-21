@@ -1,6 +1,6 @@
 {
 	"name": "kr-book-info-plugin",
-	"version": "1.1.0",
+	"version": "1.1.1",
 	"description": "Yes24를 크롤링하여 도서 정보를 가져오는 플러그인입니다.",
 	"main": "main.js",
 	"scripts": {

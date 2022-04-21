@@ -21,6 +21,7 @@ const searchBookUrl = async (keyword: string) => {
 
 		return bookUrl;
 	} catch (err) {
+		console.log(err);
 		return "";
 	}
 };
@@ -46,6 +47,7 @@ const totalSearchBookUrl = async (keyword: string) => {
 
 		return bookUrl;
 	} catch (err) {
+		console.log(err);
 		return "";
 	}
 };
@@ -94,17 +96,15 @@ const getBookInfoResult = async (bookUrl: string) => {
 			.replace("?", "？")
 			.trim();
 
-		const subTitle = html
-			.querySelector(
-				"#yDetailTopWrap > div.topColRgt > div.gd_infoTop > div > h3"
-			)
-			.getText()
-			.replace(":", "：")
-			.replace("?", "？")
-			.trim();
+		let subTitle = html.querySelector(
+			"#yDetailTopWrap > div.topColRgt > div.gd_infoTop > div > h3"
+		);
 
 		if (subTitle) {
-			title = title + "：" + subTitle;
+			title =
+				title +
+				"：" +
+				subTitle.getText().replace(":", "：").replace("?", "？").trim();
 		}
 
 		const author: string[] = [];
@@ -180,6 +180,7 @@ ${stringifyYaml(frontmatter)}---
 			result,
 		];
 	} catch (err) {
+		console.log(err);
 		return ["", ""];
 	}
 };
