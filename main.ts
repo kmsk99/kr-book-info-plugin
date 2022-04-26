@@ -11,6 +11,11 @@ export default class KrBookInfo extends Plugin {
 				// check current active file
 				const file = this.app.workspace.getActiveFile();
 
+				if (file.extension !== "md") {
+					new Notice("This file is not md file, Please open md file");
+					return;
+				}
+
 				if (!file) {
 					new Notice("There's no active file, Please open new file");
 					return;
