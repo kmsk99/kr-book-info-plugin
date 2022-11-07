@@ -49,7 +49,7 @@ export const getBookInfoResult = async ({
 		const parser = new DOMParser();
 		const html = parser.parseFromString(response.text, "text/html");
 
-		const tags: string[] = [defaultTag];
+		const tags: string[] = [defaultTag && defaultTag];
 
 		html.querySelectorAll(
 			"#infoset_goodsCate > div.infoSetCont_wrap > dl:nth-child(1) > dd > ul > li > a"
