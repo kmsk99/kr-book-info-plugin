@@ -31,3 +31,4 @@ book_note: ❌
 -   실행 시 문서 제목과 내용이 변경되며, 기존 내용 위에 프론트매터가 삽입됩니다.
 -   Execution time is around 5 to 10 seconds.
 -   실행 시간은 5 ~ 10초 내외입니다.
+-   설정에서 Tag, Status, Rate, Book Note의 기본값과 본문 내 제목 삽입 유무를 설정 가능합니다
