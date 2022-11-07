@@ -130,7 +130,7 @@ class KrBookInfoSettingTab extends PluginSettingTab {
 		containerEl.createEl("h2", { text: "Default Setting" });
 
 		new Setting(containerEl)
-			.setName("tag")
+			.setName("Tag")
 			.setDesc("Set default tag value")
 			.addText((text) =>
 				text

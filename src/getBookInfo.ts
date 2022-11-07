@@ -143,10 +143,9 @@ export const getBookInfoResult = async ({
 			book_note: `${bookNote}`,
 		};
 
-		const main = `---
-${stringifyYaml(frontmatter)}---
-
-${toggleTitle ? `# ${title}` : ""}`;
+		const main = `---\n${stringifyYaml(frontmatter)}---\n${
+			toggleTitle ? `\n# ${title}` : ""
+		}`;
 
 		return {
 			ok: true,
