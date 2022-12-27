@@ -17,6 +17,8 @@ interface getBookInfoInput {
 	myRate: string;
 	bookNote: string;
 	toggleTitle: boolean;
+	toggleIntroduction: boolean;
+	toggleIndex: boolean;
 }
 
 const titlePipeline = (title: string) => {
@@ -38,6 +40,8 @@ export const getBookInfoResult = async ({
 	myRate,
 	bookNote,
 	toggleTitle,
+	toggleIntroduction,
+	toggleIndex,
 }: getBookInfoInput): Promise<getBookInfoOutput> => {
 	bookUrl = encodeURI(bookUrl);
 
@@ -91,8 +95,6 @@ export const getBookInfoResult = async ({
 
 		const author = [...new Set(authors)];
 
-		console.log(author);
-
 		const page =
 			+html
 				.querySelector(
@@ -116,6 +118,28 @@ export const getBookInfoResult = async ({
 				"#yDetailTopWrap > div.topColLft > div > span > em > img"
 			)
 			.getAttribute("src");
+
+		const introduction = html
+			.querySelector(
+				"#infoset_introduce > div.infoSetCont_wrap > div.infoWrap_txt > div"
+			)
+			?.getText()
+			.replace(/(<br>|<br\/>|<br \/>)/g, "\r\n")
+			.replace(/(<b>|<B>|<\/b>|<\/B>|\[|\]|\*|\#)/g, "")
+			.split("\n")
+			.map((line) => line.trim() + "\n")
+			.join("");
+
+		const index = html
+			.querySelector(
+				"#infoset_toc > div.infoSetCont_wrap > div.infoWrap_txt"
+			)
+			?.getText()
+			.replace(/(<br>|<br\/>|<br \/>)/g, "\r\n")
+			.replace(/(<b>|<B>|<\/b>|<\/B>|\[|\]|\*|\#)/g, "")
+			.split("\n")
+			.map((line) => line.trim() + "\n")
+			.join("");
 
 		const frontmatter = {
 			created: `${
@@ -145,6 +169,8 @@ export const getBookInfoResult = async ({
 
 		const main = `---\n${stringifyYaml(frontmatter)}---\n${
 			toggleTitle ? `\n# ${title}` : ""
+		}${toggleIntroduction ? `\n\n# 책소개\n${introduction}` : ""}${
+			toggleIndex ? `\n\n# 목차\n${index}` : ""
 		}`;
 
 		return {

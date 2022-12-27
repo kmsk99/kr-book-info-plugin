@@ -1,4 +1,3 @@
-import { requestUrl, stringifyYaml } from "obsidian";
 import { getBookInfoResult } from "./getBookInfo";
 import { getBookUrl } from "./searchUrl";
 
@@ -9,6 +8,8 @@ interface getBookInput {
 	myRate: string;
 	bookNote: string;
 	toggleTitle: boolean;
+	toggleIntroduction: boolean;
+	toggleIndex: boolean;
 }
 
 interface getBookOutput {
@@ -30,6 +31,8 @@ export const getBook = async ({
 	myRate,
 	bookNote,
 	toggleTitle,
+	toggleIntroduction,
+	toggleIndex,
 }: getBookInput): Promise<getBookOutput> => {
 	const bookUrlResult = await getBookUrl(bookname);
 
@@ -44,6 +47,8 @@ export const getBook = async ({
 		myRate,
 		bookNote,
 		toggleTitle,
+		toggleIntroduction,
+		toggleIndex,
 	});
 
 	if (!bookInfoResult.ok) {

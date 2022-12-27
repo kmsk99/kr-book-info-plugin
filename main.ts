@@ -1,12 +1,4 @@
-import {
-	App,
-	Component,
-	Notice,
-	Plugin,
-	PluginSettingTab,
-	Setting,
-	ToggleComponent,
-} from "obsidian";
+import { App, Notice, Plugin, PluginSettingTab, Setting } from "obsidian";
 import { getBook } from "src/getBook";
 
 interface KrBookInfoSettings {
@@ -15,6 +7,8 @@ interface KrBookInfoSettings {
 	bookNoteSetting: string;
 	defaultTag: string;
 	toggleTitle: boolean;
+	toggleIntroduction: boolean;
+	toggleIndex: boolean;
 }
 
 const DEFAULT_SETTINGS: KrBookInfoSettings = {
@@ -23,6 +17,8 @@ const DEFAULT_SETTINGS: KrBookInfoSettings = {
 	bookNoteSetting: "❌",
 	defaultTag: "📚독서",
 	toggleTitle: true,
+	toggleIntroduction: false,
+	toggleIndex: false,
 };
 
 export default class KrBookInfo extends Plugin {
@@ -64,6 +60,8 @@ export default class KrBookInfo extends Plugin {
 					myRate: this.settings.myRateSetting,
 					bookNote: this.settings.bookNoteSetting,
 					toggleTitle: this.settings.toggleTitle,
+					toggleIntroduction: this.settings.toggleIntroduction,
+					toggleIndex: this.settings.toggleIndex,
 				});
 
 				if (!ok) {
@@ -189,6 +187,30 @@ class KrBookInfoSettingTab extends PluginSettingTab {
 					.setValue(this.plugin.settings.toggleTitle)
 					.onChange(async (value) => {
 						this.plugin.settings.toggleTitle = value;
+						await this.plugin.saveSettings();
+					})
+			);
+
+		new Setting(containerEl)
+			.setName("Toggle Introduction")
+			.setDesc("Add introduction on main text or not")
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.toggleIntroduction)
+					.onChange(async (value) => {
+						this.plugin.settings.toggleIntroduction = value;
+						await this.plugin.saveSettings();
+					})
+			);
+
+		new Setting(containerEl)
+			.setName("Toggle Index")
+			.setDesc("Add index on main text or not")
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.toggleIndex)
+					.onChange(async (value) => {
+						this.plugin.settings.toggleIndex = value;
 						await this.plugin.saveSettings();
 					})
 			);
