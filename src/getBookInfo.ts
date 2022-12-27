@@ -169,8 +169,8 @@ export const getBookInfoResult = async ({
 
 		const main = `---\n${stringifyYaml(frontmatter)}---\n${
 			toggleTitle ? `\n# ${title}` : ""
-		}${toggleIntroduction ? `\n\n# 책소개\n${introduction}` : ""}${
-			toggleIndex ? `\n\n# 목차\n${index}` : ""
+		}${toggleIntroduction ? `\n\n## 책소개\n${introduction}` : ""}${
+			toggleIndex ? `\n\n## 목차\n${index}` : ""
 		}`;
 
 		return {
