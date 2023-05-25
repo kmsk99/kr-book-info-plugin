@@ -119,9 +119,13 @@ export const getBookInfoResult = async ({
 				.querySelector(
 					"#yDetailTopWrap > div.topColLft > div > div.gd_3dGrp > div > span.gd_img > em > img"
 				)
-				?.getAttribute("src") || "";
-
-		console.log(coverUrl);
+				?.getAttribute("src") ||
+			html
+				.querySelector(
+					"#yDetailTopWrap > div.topColLft > div > span > em > img"
+				)
+				?.getAttribute("src") ||
+			"";
 
 		const introduction = html
 			.querySelector(

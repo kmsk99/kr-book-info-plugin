@@ -68,7 +68,7 @@ var getBookInfoResult = (_0) => __async(void 0, [_0], function* ({
   toggleIntroduction,
   toggleIndex
 }) {
-  var _a, _b, _c, _d;
+  var _a, _b, _c, _d, _e;
   bookUrl = encodeURI(bookUrl);
   try {
     const response = yield (0, import_obsidian.requestUrl)({
@@ -94,10 +94,9 @@ var getBookInfoResult = (_0) => __async(void 0, [_0], function* ({
     const author = [...new Set(authors)];
     const page = +html.querySelector("#infoset_specific > div.infoSetCont_wrap > div > table > tbody > tr:nth-child(2) > td").getText().split(" ")[0].slice(0, -1) || 0;
     const publishDate = html.querySelector("#yDetailTopWrap > div.topColRgt > div.gd_infoTop > span.gd_pubArea > span.gd_date").getText().split(" ").map((v) => v.slice(0, -1)).join("-");
-    const coverUrl = ((_b = html.querySelector("#yDetailTopWrap > div.topColLft > div").querySelector("#yDetailTopWrap > div.topColLft > div > div.gd_3dGrp > div > span.gd_img > em > img")) == null ? void 0 : _b.getAttribute("src")) || "";
-    console.log(coverUrl);
-    const introduction = (_c = html.querySelector("#infoset_introduce > div.infoSetCont_wrap > div.infoWrap_txt > div")) == null ? void 0 : _c.getText().replace(/(<br>|<br\/>|<br \/>)/g, "\r\n").replace(/(<b>|<B>|<\/b>|<\/B>|\[|\]|\*|\#)/g, "").split("\n").map((line) => line.trim() + "\n").join("");
-    const index = (_d = html.querySelector("#infoset_toc > div.infoSetCont_wrap > div.infoWrap_txt")) == null ? void 0 : _d.getText().replace(/(<br>|<br\/>|<br \/>)/g, "\r\n").replace(/(<b>|<B>|<\/b>|<\/B>|\[|\]|\*|\#)/g, "").split("\n").map((line) => line.trim() + "\n").join("");
+    const coverUrl = ((_b = html.querySelector("#yDetailTopWrap > div.topColLft > div").querySelector("#yDetailTopWrap > div.topColLft > div > div.gd_3dGrp > div > span.gd_img > em > img")) == null ? void 0 : _b.getAttribute("src")) || ((_c = html.querySelector("#yDetailTopWrap > div.topColLft > div > span > em > img")) == null ? void 0 : _c.getAttribute("src")) || "";
+    const introduction = (_d = html.querySelector("#infoset_introduce > div.infoSetCont_wrap > div.infoWrap_txt > div")) == null ? void 0 : _d.getText().replace(/(<br>|<br\/>|<br \/>)/g, "\r\n").replace(/(<b>|<B>|<\/b>|<\/B>|\[|\]|\*|\#)/g, "").split("\n").map((line) => line.trim() + "\n").join("");
+    const index = (_e = html.querySelector("#infoset_toc > div.infoSetCont_wrap > div.infoWrap_txt")) == null ? void 0 : _e.getText().replace(/(<br>|<br\/>|<br \/>)/g, "\r\n").replace(/(<b>|<B>|<\/b>|<\/B>|\[|\]|\*|\#)/g, "").split("\n").map((line) => line.trim() + "\n").join("");
     const frontmatter = {
       created: `${new Date(+new Date() + 3240 * 1e4).toISOString().split("T")[0] + " " + new Date().toTimeString().split(" ")[0].slice(0, 5)}`,
       tag: `${tag.join(" ")}`,
