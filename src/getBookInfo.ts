@@ -113,11 +113,15 @@ export const getBookInfoResult = async ({
 			.map((v) => v.slice(0, -1))
 			.join("-");
 
-		const coverUrl = html
-			.querySelector(
-				"#yDetailTopWrap > div.topColLft > div > span > em > img"
-			)
-			.getAttribute("src");
+		const coverUrl =
+			html
+				.querySelector("#yDetailTopWrap > div.topColLft > div")
+				.querySelector(
+					"#yDetailTopWrap > div.topColLft > div > div.gd_3dGrp > div > span.gd_img > em > img"
+				)
+				?.getAttribute("src") || "";
+
+		console.log(coverUrl);
 
 		const introduction = html
 			.querySelector(
@@ -185,7 +189,6 @@ export const getBookInfoResult = async ({
 			},
 		};
 	} catch (err) {
-		console.log(err);
 		return {
 			ok: false,
 		};
