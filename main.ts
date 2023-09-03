@@ -24,72 +24,84 @@ const DEFAULT_SETTINGS: KrBookInfoSettings = {
 export default class KrBookInfo extends Plugin {
 	settings: KrBookInfoSettings;
 
+	async addBookInfoToActiveFile() {
+		// check current active file
+		const file = this.app.workspace.getActiveFile();
+
+		if (file.extension !== "md") {
+			new Notice("This file is not md file, Please open md file");
+			return;
+		}
+
+		if (!file) {
+			new Notice("There's no active file, Please open new file");
+			return;
+		}
+
+		// Called when the user clicks the icon.
+		new Notice("Loading...");
+
+		// Search book through current file's title
+		const {
+			ok,
+			book: { title, main },
+			error,
+		} = await getBook({
+			bookname: file.basename,
+			defaultTag: this.settings.defaultTag,
+			status: this.settings.statusSetting,
+			myRate: this.settings.myRateSetting,
+			bookNote: this.settings.bookNoteSetting,
+			toggleTitle: this.settings.toggleTitle,
+			toggleIntroduction: this.settings.toggleIntroduction,
+			toggleIndex: this.settings.toggleIndex,
+		});
+
+		if (!ok) {
+			new Notice(error);
+			return;
+		}
+
+		// check file's text
+		const text = await this.app.vault.read(file);
+
+		// join Frontmatter And text
+		this.app.vault.modify(file, main + "\n\n" + text);
+
+		const regExp = /[\{\}\[\]\/?.,;:|\)*~`!^\-+<>@\#$%&\\\=\(\'\"]/gi;
+
+		// sanitizing the title
+		const fileName = title.replace(regExp, "");
+
+		// change file name
+		this.app.fileManager.renameFile(
+			this.app.vault.getAbstractFileByPath(file.path),
+			file.parent.path + "/" + fileName + ".md"
+		);
+
+		new Notice(`Success!`);
+
+		return;
+	}
+
 	async onload() {
 		await this.loadSettings();
+
+		this.addCommand({
+			id: "add-book-info",
+			name: "Add Book Info",
+			icon: "lines-of-text",
+			callback: async () => {
+				await this.addBookInfoToActiveFile();
+			},
+		});
 
 		// This creates an icon in the left ribbon.
 		this.addRibbonIcon(
 			"lines-of-text",
 			"Add Book Info",
 			async (evt: MouseEvent) => {
-				// check current active file
-				const file = this.app.workspace.getActiveFile();
-
-				if (file.extension !== "md") {
-					new Notice("This file is not md file, Please open md file");
-					return;
-				}
-
-				if (!file) {
-					new Notice("There's no active file, Please open new file");
-					return;
-				}
-
-				// Called when the user clicks the icon.
-				new Notice("Loading...");
-
-				// Search book through current file's title
-				const {
-					ok,
-					book: { title, main },
-					error,
-				} = await getBook({
-					bookname: file.basename,
-					defaultTag: this.settings.defaultTag,
-					status: this.settings.statusSetting,
-					myRate: this.settings.myRateSetting,
-					bookNote: this.settings.bookNoteSetting,
-					toggleTitle: this.settings.toggleTitle,
-					toggleIntroduction: this.settings.toggleIntroduction,
-					toggleIndex: this.settings.toggleIndex,
-				});
-
-				if (!ok) {
-					new Notice(error);
-					return;
-				}
-
-				// check file's text
-				const text = await this.app.vault.read(file);
-
-				// join Frontmatter And text
-				this.app.vault.modify(file, main + "\n\n" + text);
-
-				const regExp =
-					/[\{\}\[\]\/?.,;:|\)*~`!^\-+<>@\#$%&\\\=\(\'\"]/gi;
-
-				// sanitizing the title
-				const fileName = title.replace(regExp, "");
-
-				// change file name
-				this.app.fileManager.renameFile(
-					this.app.vault.getAbstractFileByPath(file.path),
-					file.parent.path + "/" + fileName + ".md"
-				);
-
-				new Notice(`Success!`);
-
-				return;
+				await this.addBookInfoToActiveFile();
 			}
 		);
 
