@@ -222,45 +222,58 @@ var DEFAULT_SETTINGS = {
   toggleIndex: false
 };
 var KrBookInfo = class extends import_obsidian3.Plugin {
+  addBookInfoToActiveFile() {
+    return __async(this, null, function* () {
+      const file = this.app.workspace.getActiveFile();
+      if (file.extension !== "md") {
+        new import_obsidian3.Notice("This file is not md file, Please open md file");
+        return;
+      }
+      if (!file) {
+        new import_obsidian3.Notice("There's no active file, Please open new file");
+        return;
+      }
+      new import_obsidian3.Notice("Loading...");
+      const {
+        ok,
+        book: { title, main },
+        error
+      } = yield getBook({
+        bookname: file.basename,
+        defaultTag: this.settings.defaultTag,
+        status: this.settings.statusSetting,
+        myRate: this.settings.myRateSetting,
+        bookNote: this.settings.bookNoteSetting,
+        toggleTitle: this.settings.toggleTitle,
+        toggleIntroduction: this.settings.toggleIntroduction,
+        toggleIndex: this.settings.toggleIndex
+      });
+      if (!ok) {
+        new import_obsidian3.Notice(error);
+        return;
+      }
+      const text = yield this.app.vault.read(file);
+      this.app.vault.modify(file, main + "\n\n" + text);
+      const regExp = /[\{\}\[\]\/?.,;:|\)*~`!^\-+<>@\#$%&\\\=\(\'\"]/gi;
+      const fileName = title.replace(regExp, "");
+      this.app.fileManager.renameFile(this.app.vault.getAbstractFileByPath(file.path), file.parent.path + "/" + fileName + ".md");
+      new import_obsidian3.Notice(`Success!`);
+      return;
+    });
+  }
   onload() {
     return __async(this, null, function* () {
       yield this.loadSettings();
+      this.addCommand({
+        id: "add-book-info",
+        name: "Add Book Info",
+        icon: "lines-of-text",
+        callback: () => __async(this, null, function* () {
+          yield this.addBookInfoToActiveFile();
+        })
+      });
       this.addRibbonIcon("lines-of-text", "Add Book Info", (evt) => __async(this, null, function* () {
-        const file = this.app.workspace.getActiveFile();
-        if (file.extension !== "md") {
-          new import_obsidian3.Notice("This file is not md file, Please open md file");
-          return;
-        }
-        if (!file) {
-          new import_obsidian3.Notice("There's no active file, Please open new file");
-          return;
-        }
-        new import_obsidian3.Notice("Loading...");
-        const {
-          ok,
-          book: { title, main },
-          error
-        } = yield getBook({
-          bookname: file.basename,
-          defaultTag: this.settings.defaultTag,
-          status: this.settings.statusSetting,
-          myRate: this.settings.myRateSetting,
-          bookNote: this.settings.bookNoteSetting,
-          toggleTitle: this.settings.toggleTitle,
-          toggleIntroduction: this.settings.toggleIntroduction,
-          toggleIndex: this.settings.toggleIndex
-        });
-        if (!ok) {
-          new import_obsidian3.Notice(error);
-          return;
-        }
-        const text = yield this.app.vault.read(file);
-        this.app.vault.modify(file, main + "\n\n" + text);
-        const regExp = /[\{\}\[\]\/?.,;:|\)*~`!^\-+<>@\#$%&\\\=\(\'\"]/gi;
-        const fileName = title.replace(regExp, "");
-        this.app.fileManager.renameFile(this.app.vault.getAbstractFileByPath(file.path), file.parent.path + "/" + fileName + ".md");
-        new import_obsidian3.Notice(`Success!`);
-        return;
+        yield this.addBookInfoToActiveFile();
       }));
       this.addSettingTab(new KrBookInfoSettingTab(this.app, this));
     });
