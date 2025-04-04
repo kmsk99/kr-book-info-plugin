@@ -11,19 +11,13 @@ const searchBookUrl = async (bookName: string): Promise<searchUrlOutput> => {
 	try {
 		const response = await requestUrl({
 			url:
-				"http://www.yes24.com/Product/Search?domain=BOOK&query=" +
+				"http://www.yes24.com/Product/searchapi/bulletsearch/goods?query=" +
 				bookName,
 		});
-
-		const parser = new DOMParser();
-		const html = parser.parseFromString(response.text, "text/html");
-
-		const bookUrl = html
-			.querySelector(
-				"#yesSchList > li:nth-child(1) > div > div.item_info > div.info_row.info_name > a.gd_name"
-			)
-			.getAttribute("href");
-
+		const data = JSON.parse(response.text);
+		const lstSearchKeywordResult = data?.lstSearchKeywordResult;
+		const bookInfo = lstSearchKeywordResult[0].GOODDS_INDEXES.GOODS_NO;
+		const bookUrl = `/Product/Goods/${bookInfo}`;
 		return { ok: true, url: bookUrl };
 	} catch (err) {
 		console.log(err);
