@@ -1,6 +1,6 @@
 {
 	"name": "kr-book-info-plugin",
-	"version": "1.3.3",
+	"version": "1.4.0",
 	"description": "Yes24를 크롤링하여 도서 정보를 가져오는 플러그인입니다.",
 	"main": "main.js",
 	"scripts": {
@@ -8,7 +8,12 @@
 		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
 		"version": "node version-bump.mjs && git add manifest.json versions.json"
 	},
-	"keywords": [],
+	"keywords": [
+		"yes24",
+		"book",
+		"info",
+		"plugin"
+	],
 	"author": "",
 	"license": "MIT",
 	"devDependencies": {

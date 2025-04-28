@@ -1,4 +1,4 @@
-## KR Book Info Plugin
+## KR Book Info
 
 -   This plugin imports the book information of Yes24 into Front Matter in the document.
 -   이 플러그인은 예스24의 책 정보를 문서 내 프론트매터로 가져옵니다.
