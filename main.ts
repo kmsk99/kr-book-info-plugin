@@ -25,28 +25,22 @@ export default class KrBookInfo extends Plugin {
 	settings: KrBookInfoSettings;
 
 	async addBookInfoToActiveFile() {
-		// check current active file
 		const file = this.app.workspace.getActiveFile();
-
-		if (file.extension !== "md") {
-			new Notice("This file is not md file, Please open md file");
-			return;
-		}
 
 		if (!file) {
 			new Notice("There's no active file, Please open new file");
 			return;
 		}
 
+		if (file.extension !== "md") {
+			new Notice("This file is not md file, Please open md file");
+			return;
+		}
+
 		// Called when the user clicks the icon.
 		new Notice("Loading...");
 
-		// Search book through current file's title
-		const {
-			ok,
-			book: { title, main },
-			error,
-		} = await getBook({
+		const result = await getBook({
 			bookname: file.basename,
 			defaultTag: this.settings.defaultTag,
 			status: this.settings.statusSetting,
@@ -57,10 +51,12 @@ export default class KrBookInfo extends Plugin {
 			toggleIndex: this.settings.toggleIndex,
 		});
 
-		if (!ok) {
-			new Notice(error);
+		if (!result.ok) {
+			new Notice(result.error);
 			return;
 		}
+
+		const { title, main } = result.book;
 
 		// check file's text
 		const text = await this.app.vault.read(file);
@@ -124,7 +120,7 @@ export default class KrBookInfo extends Plugin {
 	onunload() {}
 }
 
-class KrBookInfoSettingTab extends PluginSettingTab {
+export class KrBookInfoSettingTab extends PluginSettingTab {
 	plugin: KrBookInfo;
 
 	constructor(app: App, plugin: KrBookInfo) {

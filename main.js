@@ -44,6 +44,7 @@ var __async = (__this, __arguments, generator) => {
 // main.ts
 var main_exports = {};
 __export(main_exports, {
+  KrBookInfoSettingTab: () => KrBookInfoSettingTab,
   default: () => KrBookInfo
 });
 module.exports = __toCommonJS(main_exports);
@@ -246,20 +247,16 @@ var KrBookInfo = class extends import_obsidian3.Plugin {
   addBookInfoToActiveFile() {
     return __async(this, null, function* () {
       const file = this.app.workspace.getActiveFile();
-      if (file.extension !== "md") {
-        new import_obsidian3.Notice("This file is not md file, Please open md file");
-        return;
-      }
       if (!file) {
         new import_obsidian3.Notice("There's no active file, Please open new file");
         return;
       }
+      if (file.extension !== "md") {
+        new import_obsidian3.Notice("This file is not md file, Please open md file");
+        return;
+      }
       new import_obsidian3.Notice("Loading...");
-      const {
-        ok,
-        book: { title, main },
-        error
-      } = yield getBook({
+      const result = yield getBook({
         bookname: file.basename,
         defaultTag: this.settings.defaultTag,
         status: this.settings.statusSetting,
@@ -269,10 +266,11 @@ var KrBookInfo = class extends import_obsidian3.Plugin {
         toggleIntroduction: this.settings.toggleIntroduction,
         toggleIndex: this.settings.toggleIndex
       });
-      if (!ok) {
-        new import_obsidian3.Notice(error);
+      if (!result.ok) {
+        new import_obsidian3.Notice(result.error);
         return;
       }
+      const { title, main } = result.book;
       const text = yield this.app.vault.read(file);
       this.app.vault.modify(file, main + "\n\n" + text);
       const regExp = /[\{\}\[\]\/?.,;:|\)*~`!^\-+<>@\#$%&\\\=\(\'\"]/gi;
