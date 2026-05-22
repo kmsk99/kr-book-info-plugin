@@ -69,15 +69,18 @@ var getBookInfoResult = (_0) => __async(null, [_0], function* ({
   bookUrl = encodeURI(bookUrl);
   try {
     const response = yield (0, import_obsidian.requestUrl)({
-      url: `http://www.yes24.com` + bookUrl
+      url: `https://www.yes24.com` + bookUrl
     });
     const parser = new DOMParser();
     const html = parser.parseFromString(response.text, "text/html");
     const tags = [defaultTag && defaultTag];
     html.querySelectorAll(
-      "#infoset_goodsCate > div.infoSetCont_wrap > dl:nth-child(1) > dd > ul > li > a"
-    ).forEach((value) => {
-      tags.push(value.getText().replace(/(\s*)/g, ""));
+      "#infoset_goodsCate > div.infoSetCont_wrap > dl:nth-child(1) > dd > ul > li"
+    ).forEach((li) => {
+      const links = li.querySelectorAll("a");
+      links.forEach((link, idx) => {
+        if (idx > 0) tags.push(link.getText().replace(/(\s*)/g, ""));
+      });
     });
     const tag = [...new Set(tags)];
     const mainTitle = html.querySelector(
@@ -99,9 +102,21 @@ var getBookInfoResult = (_0) => __async(null, [_0], function* ({
       authors.push(value.getText().trim());
     });
     const author = [...new Set(authors)];
-    const page = +html.querySelector(
-      "#infoset_specific > div.infoSetCont_wrap > div > table > tbody > tr:nth-child(2) > td"
-    ).getText().split(" ")[0].slice(0, -1) || 0;
+    let page = 0;
+    let isbn = "";
+    html.querySelectorAll(
+      "#infoset_specific > div.infoSetCont_wrap > div > table > tbody > tr"
+    ).forEach((row) => {
+      const th = row.querySelector("th");
+      const td = row.querySelector("td");
+      if (!th || !td) return;
+      const header = th.getText();
+      if (header.includes("\uCABD\uC218")) {
+        page = +td.getText().split(" ")[0].slice(0, -1) || 0;
+      } else if (header.includes("ISBN13")) {
+        isbn = td.getText().trim();
+      }
+    });
     const publishDate = html.querySelector(
       "#yDetailTopWrap > div.topColRgt > div.gd_infoTop > span.gd_pubArea > span.gd_date"
     ).getText().split(" ").map((v) => v.slice(0, -1)).join("-");
@@ -123,6 +138,7 @@ var getBookInfoResult = (_0) => __async(null, [_0], function* ({
       author: `${author.join(", ")}`,
       category: `${tag[1]}`,
       total_page: page,
+      isbn: `${isbn}`,
       publish_date: `${publishDate}`,
       cover_url: `${coverUrl}`,
       status: `${status}`,
@@ -149,6 +165,7 @@ ${index}` : ""}`;
       }
     };
   } catch (err) {
+    console.error("[kr-book-info] getBookInfoResult error:", err);
     return {
       ok: false
     };
@@ -161,7 +178,7 @@ var searchBookUrl = (bookName) => __async(null, null, function* () {
   bookName = encodeURI(bookName);
   try {
     const response = yield (0, import_obsidian2.requestUrl)({
-      url: "http://www.yes24.com/Product/searchapi/bulletsearch/goods?query=" + bookName
+      url: "https://www.yes24.com/Product/searchapi/bulletsearch/goods?query=" + bookName
     });
     const data = JSON.parse(response.text);
     const lstSearchKeywordResult = data == null ? void 0 : data.lstSearchKeywordResult;
@@ -177,7 +194,7 @@ var totalSearchBookUrl = (bookName) => __async(null, null, function* () {
   bookName = encodeURI(bookName);
   try {
     const response = yield (0, import_obsidian2.requestUrl)({
-      url: "http://www.yes24.com/Product/Search?domain=ALL&query=" + bookName
+      url: "https://www.yes24.com/Product/Search?domain=ALL&query=" + bookName
     });
     const parser = new DOMParser();
     const html = parser.parseFromString(response.text, "text/html");

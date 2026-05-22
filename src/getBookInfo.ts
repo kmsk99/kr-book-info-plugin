@@ -47,7 +47,7 @@ export const getBookInfoResult = async ({
 
 	try {
 		const response = await requestUrl({
-			url: `http://www.yes24.com` + bookUrl,
+			url: `https://www.yes24.com` + bookUrl,
 		});
 
 		const parser = new DOMParser();
@@ -56,9 +56,13 @@ export const getBookInfoResult = async ({
 		const tags: string[] = [defaultTag && defaultTag];
 
 		html.querySelectorAll(
-			"#infoset_goodsCate > div.infoSetCont_wrap > dl:nth-child(1) > dd > ul > li > a"
-		).forEach((value) => {
-			tags.push(value.getText().replace(/(\s*)/g, ""));
+			"#infoset_goodsCate > div.infoSetCont_wrap > dl:nth-child(1) > dd > ul > li"
+		).forEach((li) => {
+			const links = li.querySelectorAll("a");
+			// skip first link ("국내도서"/"해외도서"), keep the rest as category tags
+			links.forEach((link, idx) => {
+				if (idx > 0) tags.push(link.getText().replace(/(\s*)/g, ""));
+			});
 		});
 
 		const tag = [...new Set(tags)];
@@ -95,14 +99,21 @@ export const getBookInfoResult = async ({
 
 		const author = [...new Set(authors)];
 
-		const page =
-			+html
-				.querySelector(
-					"#infoset_specific > div.infoSetCont_wrap > div > table > tbody > tr:nth-child(2) > td"
-				)
-				.getText()
-				.split(" ")[0]
-				.slice(0, -1) || 0;
+		let page = 0;
+		let isbn = "";
+		html.querySelectorAll(
+			"#infoset_specific > div.infoSetCont_wrap > div > table > tbody > tr"
+		).forEach((row) => {
+			const th = row.querySelector("th");
+			const td = row.querySelector("td");
+			if (!th || !td) return;
+			const header = th.getText();
+			if (header.includes("쪽수")) {
+				page = +(td.getText().split(" ")[0].slice(0, -1)) || 0;
+			} else if (header.includes("ISBN13")) {
+				isbn = td.getText().trim();
+			}
+		});
 
 		const publishDate = html
 			.querySelector(
@@ -162,6 +173,7 @@ export const getBookInfoResult = async ({
 			author: `${author.join(", ")}`,
 			category: `${tag[1]}`,
 			total_page: page,
+			isbn: `${isbn}`,
 			publish_date: `${publishDate}`,
 			cover_url: `${coverUrl}`,
 			status: `${status}`,
@@ -193,6 +205,7 @@ export const getBookInfoResult = async ({
 			},
 		};
 	} catch (err) {
+		console.error("[kr-book-info] getBookInfoResult error:", err);
 		return {
 			ok: false,
 		};

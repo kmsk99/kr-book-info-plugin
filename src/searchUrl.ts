@@ -11,7 +11,7 @@ const searchBookUrl = async (bookName: string): Promise<searchUrlOutput> => {
 	try {
 		const response = await requestUrl({
 			url:
-				"http://www.yes24.com/Product/searchapi/bulletsearch/goods?query=" +
+				"https://www.yes24.com/Product/searchapi/bulletsearch/goods?query=" +
 				bookName,
 		});
 		const data = JSON.parse(response.text);
@@ -33,7 +33,7 @@ const totalSearchBookUrl = async (
 	try {
 		const response = await requestUrl({
 			url:
-				"http://www.yes24.com/Product/Search?domain=ALL&query=" +
+				"https://www.yes24.com/Product/Search?domain=ALL&query=" +
 				bookName,
 		});
 
