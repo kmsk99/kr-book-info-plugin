@@ -1,186 +1,88 @@
 import KrBookInfo from '../main';
-import { App, Vault, FileManager, PluginSettingTab, Notice } from 'obsidian';
-import * as getBookModule from '../src/getBook';
+import {Notice} from 'obsidian';
+import {BookSearchModal} from '../src/BookSearchModal';
+import * as books from '../src/getBook';
+import * as persistence from '../src/saveBook';
+const settings={defaultTag:'책',statusSetting:'읽는 중',myRateSetting:'3',bookNoteSetting:'',toggleTitle:true,toggleIntroduction:true,toggleIndex:true};
+let plugin:KrBookInfo;let app:any;let choose:jest.SpyInstance;let get:jest.SpyInstance;let save:jest.SpyInstance;
+beforeEach(()=>{
+	app={workspace:{getActiveFile:jest.fn(()=>({path:'A.md',basename:'A',extension:'md'}))}};
+	plugin=new KrBookInfo(app,{} as any);plugin.settings=settings;
+	choose=jest.spyOn(BookSearchModal.prototype,'choose').mockResolvedValue({id:'2',title:'B'} as any);
+	get=jest.spyOn(books,'getBook').mockResolvedValue({title:'B',metadata:{},defaults:{},body:''});save=jest.spyOn(persistence,'saveBook').mockResolvedValue();jest.clearAllMocks();
+});
+afterEach(()=>jest.restoreAllMocks());
+it('imports exactly the selected product into the original file even if the active tab changes',async()=>{
+	const file=app.workspace.getActiveFile();app.workspace.getActiveFile.mockReturnValueOnce(file).mockReturnValue({path:'Other.md'});
+	await plugin.addBookInfoToActiveFile();expect(get).toHaveBeenCalledWith('2',settings);expect(save).toHaveBeenCalledWith(app,file,expect.anything());expect(Notice).toHaveBeenCalledWith('도서 정보를 저장했습니다.');
+});
+it('does nothing after cancellation or without a Markdown file',async()=>{
+	choose.mockResolvedValue(null);await plugin.addBookInfoToActiveFile();expect(get).not.toHaveBeenCalled();expect(save).not.toHaveBeenCalled();
+	app.workspace.getActiveFile.mockReturnValue(null);await plugin.addBookInfoToActiveFile();
+	app.workspace.getActiveFile.mockReturnValue({extension:'pdf'});await plugin.addBookInfoToActiveFile();expect(choose).toHaveBeenCalledTimes(1);
+});
+it('handles errors and permits retry without a stuck busy flag',async()=>{
+	jest.spyOn(console,'error').mockImplementation(()=>{});get.mockRejectedValueOnce(new Error('offline'));
+	await plugin.addBookInfoToActiveFile();expect(save).not.toHaveBeenCalled();expect(Notice).toHaveBeenCalledWith('offline');
+	await plugin.addBookInfoToActiveFile();expect(save).toHaveBeenCalledTimes(1);
+});
+it('prevents repeated commands while choosing',async()=>{
+	let resolve:any;choose.mockReturnValue(new Promise(r=>resolve=r));const first=plugin.addBookInfoToActiveFile();await plugin.addBookInfoToActiveFile();expect(choose).toHaveBeenCalledTimes(1);resolve(null);await first;
+});
+it('registers working command and ribbon callbacks and loads/saves settings',async()=>{
+	let command:any,ribbon:any;plugin.addCommand=jest.fn((c): any =>{command=c;return null;});plugin.addRibbonIcon=jest.fn((_i,_n,cb): any =>{ribbon=cb;return null;});plugin.addSettingTab=jest.fn();plugin.loadData=jest.fn().mockResolvedValue({defaultTag:'custom'});plugin.saveData=jest.fn();
+	await plugin.onload();expect(plugin.settings.defaultTag).toBe('custom');
+	const run=jest.spyOn(plugin,'addBookInfoToActiveFile').mockResolvedValue();await command.callback();await ribbon({});expect(run).toHaveBeenCalledTimes(2);await plugin.saveSettings();expect(plugin.saveData).toHaveBeenCalledWith(plugin.settings);
+	plugin.onunload();
+});
 
-// Mock specific methods of the obsidian module used in main.ts
-// Note: most mocks are now in __mocks__/obsidian.ts.
-jest.mock('obsidian');
+it('does not save a late detail response after the plugin is disabled', async () => {
+	let resolve: (value: books.BookNote) => void;
+	get.mockReturnValue(new Promise(r => { resolve = r; }));
+	const pending = plugin.addBookInfoToActiveFile();
+	await Promise.resolve();
+	plugin.onunload();
+	resolve({ title: 'Late', metadata: {}, defaults: {}, body: '' });
+	await pending;
+	expect(save).not.toHaveBeenCalled();
+	expect(Notice).not.toHaveBeenCalledWith('도서 정보를 저장했습니다.');
+});
 
-describe('KrBookInfo Integration', () => {
-    let plugin: KrBookInfo;
-    let mockApp: App;
-    let mockVault: Vault;
-    let mockFileManager: FileManager;
+it('closes a pending selection when unloaded and ignores commands after unload', async () => {
+	choose.mockRestore();
+	const pending = plugin.addBookInfoToActiveFile();
+	plugin.onunload();
+	await pending;
+	await plugin.addBookInfoToActiveFile();
+	expect(get).not.toHaveBeenCalled();
+	expect(save).not.toHaveBeenCalled();
+});
 
-    beforeEach(() => {
-        mockVault = {
-            read: jest.fn(),
-            modify: jest.fn(),
-            getAbstractFileByPath: jest.fn()
-        } as unknown as Vault;
+it('does not show success before persistence has resolved and hides loading on failure', async () => {
+	jest.spyOn(console, 'error').mockImplementation(() => {});
+	let reject: (reason: Error) => void;
+	save.mockReturnValue(new Promise((_resolve, r) => { reject = r; }));
+	const pending = plugin.addBookInfoToActiveFile();
+	await Promise.resolve(); await Promise.resolve();
+	expect(Notice).not.toHaveBeenCalledWith('도서 정보를 저장했습니다.');
+	const loading = (Notice as unknown as jest.Mock).mock.results.find(result => result.value?.hide)?.value;
+	expect(loading.hide).not.toHaveBeenCalled();
+	reject(new Error('disk full')); await pending;
+	expect(loading.hide).toHaveBeenCalledTimes(1);
+	expect(Notice).not.toHaveBeenCalledWith('도서 정보를 저장했습니다.');
+});
 
-        mockFileManager = {
-            renameFile: jest.fn()
-        } as unknown as FileManager;
+it('reports non-Error failures with a useful message', async () => {
+	jest.spyOn(console, 'error').mockImplementation(() => {});
+	get.mockRejectedValue('offline');
+	await plugin.addBookInfoToActiveFile();
+	expect(Notice).toHaveBeenCalledWith(expect.stringContaining('다시 시도'));
+});
 
-        mockApp = {
-            vault: mockVault,
-            fileManager: mockFileManager,
-            workspace: {
-                getActiveFile: jest.fn()
-            }
-        } as unknown as App;
-
-        plugin = new KrBookInfo(mockApp, {} as any);
-        (plugin as any).app = mockApp;
-        plugin.settings = {
-            statusSetting: 'Status',
-            myRateSetting: '5',
-            bookNoteSetting: 'Note',
-            defaultTag: 'Tag',
-            toggleTitle: true,
-            toggleIntroduction: false,
-            toggleIndex: false
-        };
-
-        jest.clearAllMocks();
-    });
-
-    it('should add book info to active file', async () => {
-        // Mock getBook to return success
-        jest.spyOn(getBookModule, 'getBook').mockResolvedValue({
-            ok: true,
-            book: { title: 'New Title', main: 'New Content' }
-        });
-
-        // Mock active file
-        const mockFile = {
-            extension: 'md',
-            basename: 'Book Search Query',
-            parent: { path: 'folder' },
-            path: 'folder/Book Search Query.md'
-        };
-        (mockApp.workspace.getActiveFile as jest.Mock).mockReturnValue(mockFile);
-        (mockApp.vault.read as jest.Mock).mockResolvedValue('Original Text');
-
-        await plugin.addBookInfoToActiveFile();
-
-        // Verify getBook was called with correct params
-        expect(getBookModule.getBook).toHaveBeenCalledWith(expect.objectContaining({
-            bookname: 'Book Search Query',
-            defaultTag: 'Tag'
-        }));
-
-        // Verify vault.modify was called with content appended
-        expect(mockVault.modify).toHaveBeenCalledWith(
-            mockFile,
-            'New Content\n\nOriginal Text'
-        );
-
-        // Verify file rename
-        expect(mockFileManager.renameFile).toHaveBeenCalledWith(
-            undefined, // getAbstractFileByPath returns undefined here but that's what we mocked
-            'folder/New Title.md'
-        );
-
-        expect(Notice).toHaveBeenCalledWith('Success!');
-    });
-
-    it('should show notice if not md file', async () => {
-        const mockFile = { extension: 'txt' };
-        (mockApp.workspace.getActiveFile as jest.Mock).mockReturnValue(mockFile);
-
-        await plugin.addBookInfoToActiveFile();
-
-        expect(Notice).toHaveBeenCalledWith(expect.stringContaining('not md file'));
-        expect(getBookModule.getBook).not.toHaveBeenCalled();
-    });
-
-    it('should show notice if no active file', async () => {
-        (mockApp.workspace.getActiveFile as jest.Mock).mockReturnValue(null);
-
-        await plugin.addBookInfoToActiveFile();
-
-        expect(Notice).toHaveBeenCalledWith(expect.stringContaining('no active file'));
-        expect(getBookModule.getBook).not.toHaveBeenCalled();
-    });
-
-    it('should load settings and register commands on onload', async () => {
-        plugin.addCommand = jest.fn();
-        plugin.addRibbonIcon = jest.fn();
-        plugin.addSettingTab = jest.fn();
-        plugin.loadData = jest.fn().mockResolvedValue({ defaultTag: 'NewTag' });
-
-        await plugin.onload();
-
-        expect(plugin.settings.defaultTag).toBe('NewTag');
-        expect(plugin.addCommand).toHaveBeenCalledWith(expect.objectContaining({
-            id: 'add-book-info',
-            name: 'Add Book Info'
-        }));
-        expect(plugin.addRibbonIcon).toHaveBeenCalledWith('lines-of-text', 'Add Book Info', expect.any(Function));
-        expect(plugin.addSettingTab).toHaveBeenCalled();
-    });
-
-    it('should call addBookInfoToActiveFile when command callback is executed', async () => {
-        let commandCallback: any;
-        (plugin.addCommand as any) = jest.fn((command) => {
-            commandCallback = command.callback;
-        });
-        plugin.addRibbonIcon = jest.fn();
-        plugin.addSettingTab = jest.fn();
-        plugin.loadData = jest.fn().mockResolvedValue({});
-        plugin.addBookInfoToActiveFile = jest.fn();
-
-        await plugin.onload();
-        await commandCallback();
-
-        expect(plugin.addBookInfoToActiveFile).toHaveBeenCalled();
-    });
-
-    it('should call addBookInfoToActiveFile when ribbon icon callback is executed', async () => {
-        let ribbonCallback: any;
-        (plugin.addCommand as any) = jest.fn();
-        (plugin.addRibbonIcon as any) = jest.fn((icon, title, callback) => {
-            ribbonCallback = callback;
-        });
-        plugin.addSettingTab = jest.fn();
-        plugin.loadData = jest.fn().mockResolvedValue({});
-        plugin.addBookInfoToActiveFile = jest.fn();
-
-        await plugin.onload();
-        await ribbonCallback({} as MouseEvent);
-
-        expect(plugin.addBookInfoToActiveFile).toHaveBeenCalled();
-    });
-
-    it('should handle getBook error', async () => {
-        jest.spyOn(getBookModule, 'getBook').mockResolvedValue({
-            ok: false,
-            error: 'Book not found'
-        });
-
-        const mockFile = {
-            extension: 'md',
-            basename: 'Nonexistent Book',
-            parent: { path: 'folder' },
-            path: 'folder/Nonexistent Book.md'
-        };
-        (mockApp.workspace.getActiveFile as jest.Mock).mockReturnValue(mockFile);
-
-        await plugin.addBookInfoToActiveFile();
-
-        expect(Notice).toHaveBeenCalledWith('Book not found');
-        expect(mockVault.modify).not.toHaveBeenCalled();
-        expect(mockFileManager.renameFile).not.toHaveBeenCalled();
-    });
-
-    it('should save settings correctly', async () => {
-        plugin.saveData = jest.fn();
-        plugin.settings.defaultTag = 'NewTag';
-
-        await plugin.saveSettings();
-
-        expect(plugin.saveData).toHaveBeenCalledWith(plugin.settings);
-    });
+it('merges partial settings while retaining false and empty values', async () => {
+	plugin.loadData = jest.fn().mockResolvedValue({ toggleTitle: false, defaultTag: '' });
+	await plugin.loadSettings();
+	expect(plugin.settings.toggleTitle).toBe(false);
+	expect(plugin.settings.defaultTag).toBe('');
+	expect(plugin.settings.myRateSetting).toBe('0');
 });
