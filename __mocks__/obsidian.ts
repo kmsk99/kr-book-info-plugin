@@ -1,6 +1,5 @@
 export const requestUrl = jest.fn();
-export const stringifyYaml = jest.fn((obj) => JSON.stringify(obj));
-export const Notice = jest.fn();
+export const Notice = jest.fn().mockImplementation(() => ({ hide: jest.fn() }));
 
 export class Plugin {
     app: any;
@@ -40,48 +39,57 @@ export class PluginSettingTab {
     constructor(app: any, plugin: any) {
         this.app = app;
         this.plugin = plugin;
-        this.containerEl = {
-            empty: jest.fn(),
-            createEl: jest.fn(),
-        }
+        this.containerEl = document.createElement('div');
     }
 
     display() { }
 }
 
 export class Setting {
-    private textCallbacks: ((text: any) => void)[] = [];
-    private toggleCallbacks: ((toggle: any) => void)[] = [];
-
-    constructor(containerEl: any) { }
-    
-    setName(name: string) { return this; }
-    setDesc(desc: string) { return this; }
-    
-    addText(cb: any) { 
-        this.textCallbacks.push(cb);
-        const mockText: any = {
-            setPlaceholder: jest.fn().mockReturnThis(),
-            setValue: jest.fn().mockReturnThis(),
-            onChange: jest.fn((onChangeCb: any) => {
-                mockText.onChangeCallback = onChangeCb;
-                return mockText;
-            })
-        };
-        cb(mockText);
-        return this; 
+    row: HTMLElement;
+    constructor(containerEl: HTMLElement) {
+        this.row = document.createElement('label');
+        containerEl.append(this.row);
     }
-    
+    setName(name: string) { this.row.dataset.name = name; return this; }
+    setDesc(desc: string) { this.row.title = desc; return this; }
+    addText(cb: any) {
+        const input = document.createElement('input');
+        this.row.append(input);
+        const control = {
+            setPlaceholder: (value: string) => { input.placeholder = value; return control; },
+            setValue: (value: string) => { input.value = value; return control; },
+            onChange: (handler: (value: string) => void) => {
+                input.addEventListener('input', () => handler(input.value));
+                return control;
+            }
+        };
+        cb(control); return this;
+    }
     addToggle(cb: any) {
-        this.toggleCallbacks.push(cb);
-        const mockToggle: any = {
-            setValue: jest.fn().mockReturnThis(),
-            onChange: jest.fn((onChangeCb: any) => {
-                mockToggle.onChangeCallback = onChangeCb;
-                return mockToggle;
-            })
+        const input = document.createElement('input'); input.type = 'checkbox';
+        this.row.append(input);
+        const control = {
+            setValue: (value: boolean) => { input.checked = value; return control; },
+            onChange: (handler: (value: boolean) => void) => {
+                input.addEventListener('change', () => handler(input.checked));
+                return control;
+            }
         };
-        cb(mockToggle);
-        return this; 
+        cb(control); return this;
     }
+}
+
+export const normalizePath = (path: string) => path.replace(/\\/g, '/').replace(/\/+/g, '/').replace(/^\//, '');
+export const getFrontMatterInfo = (text: string) => {
+    const match = text.match(/^---\r?\n[\s\S]*?\r?\n---(?:\r?\n|$)/);
+    return { contentStart: match ? match[0].length : 0 };
+};
+export class Modal {
+    contentEl = document.createElement('div');
+    constructor(public app: any) {}
+    open() { this.onOpen(); }
+    close() { this.onClose(); }
+    onOpen() {}
+    onClose() {}
 }

@@ -1,0 +1,28 @@
+name: Release Obsidian plugin
+on:
+  push:
+    tags: ['[0-9]*']
+permissions:
+  contents: read
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.x'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Validate release versions
+        run: |
+          node -e 'const m=require("./manifest.json"); const p=require("./package.json"); const v=require("./versions.json"); if(process.env.GITHUB_REF_NAME!==m.version || p.version!==m.version || v[m.version]!==m.minAppVersion) process.exit(1)'
+      - run: pnpm test
+      - run: pnpm build
+      - name: Create draft release from tested build
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release create "$GITHUB_REF_NAME" main.js manifest.json styles.css --verify-tag --draft --title "$GITHUB_REF_NAME" --generate-notes

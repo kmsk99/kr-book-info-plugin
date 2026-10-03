@@ -1,5 +1,7 @@
 import { App, Notice, Plugin, PluginSettingTab, Setting } from "obsidian";
-import { getBook } from "src/getBook";
+import { getBook } from "./src/getBook";
+import { BookSearchModal } from "./src/BookSearchModal";
+import { saveBook } from "./src/saveBook";
 
 interface KrBookInfoSettings {
 	statusSetting: string;
@@ -24,63 +26,38 @@ const DEFAULT_SETTINGS: KrBookInfoSettings = {
 export default class KrBookInfo extends Plugin {
 	settings: KrBookInfoSettings;
 
+	private busy = false;
+	private unloaded = false;
+	private searchModal: BookSearchModal | null = null;
+
 	async addBookInfoToActiveFile() {
+		if (this.busy || this.unloaded) return;
 		const file = this.app.workspace.getActiveFile();
-
-		if (!file) {
-			new Notice("There's no active file, Please open new file");
-			return;
+		if (!file) { new Notice("열린 노트가 없습니다. Markdown 노트를 열어 주세요."); return; }
+		if (file.extension !== "md") { new Notice("Markdown 노트에서 실행해 주세요."); return; }
+		this.busy = true;
+		let loading: Notice | undefined;
+		try {
+			this.searchModal = new BookSearchModal(this.app, file.basename);
+			const selected = await this.searchModal.choose();
+			this.searchModal = null;
+			if (!selected || this.unloaded) return;
+			loading = new Notice("도서 정보를 가져오는 중…", 0);
+			const book = await getBook(selected.id, this.settings);
+			if (this.unloaded) return;
+			await saveBook(this.app, file, book);
+			if (!this.unloaded) new Notice("도서 정보를 저장했습니다.");
+		} catch (error) {
+			console.error("[kr-book-info]", error);
+			new Notice(error instanceof Error ? error.message : "도서 정보를 가져오지 못했습니다. 다시 시도해 주세요.");
+		} finally {
+			loading?.hide();
+			this.busy = false;
 		}
-
-		if (file.extension !== "md") {
-			new Notice("This file is not md file, Please open md file");
-			return;
-		}
-
-		// Called when the user clicks the icon.
-		new Notice("Loading...");
-
-		const result = await getBook({
-			bookname: file.basename,
-			defaultTag: this.settings.defaultTag,
-			status: this.settings.statusSetting,
-			myRate: this.settings.myRateSetting,
-			bookNote: this.settings.bookNoteSetting,
-			toggleTitle: this.settings.toggleTitle,
-			toggleIntroduction: this.settings.toggleIntroduction,
-			toggleIndex: this.settings.toggleIndex,
-		});
-
-		if (!result.ok) {
-			new Notice(result.error);
-			return;
-		}
-
-		const { title, main } = result.book;
-
-		// check file's text
-		const text = await this.app.vault.read(file);
-
-		// join Frontmatter And text
-		this.app.vault.modify(file, main + "\n\n" + text);
-
-		const regExp = /[\{\}\[\]\/?.,;:|\)*~`!^\-+<>@\#$%&\\\=\(\'\"]/gi;
-
-		// sanitizing the title
-		const fileName = title.replace(regExp, "");
-
-		// change file name
-		this.app.fileManager.renameFile(
-			this.app.vault.getAbstractFileByPath(file.path),
-			file.parent.path + "/" + fileName + ".md"
-		);
-
-		new Notice(`Success!`);
-
-		return;
 	}
 
 	async onload() {
+		this.unloaded = false;
 		await this.loadSettings();
 
 		this.addCommand({
@@ -117,7 +94,10 @@ export default class KrBookInfo extends Plugin {
 		await this.saveData(this.settings);
 	}
 
-	onunload() {}
+	onunload() {
+		this.unloaded = true;
+		this.searchModal?.close();
+	}
 }
 
 export class KrBookInfoSettingTab extends PluginSettingTab {

@@ -12,6 +12,7 @@ module.exports = {
     },
     setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
     collectCoverage: true,
+    collectCoverageFrom: ['main.ts', 'src/**/*.ts'],
     coverageDirectory: 'coverage',
     coverageReporters: ['text', 'lcov', 'html'],
     testMatch: ['**/tests/**/*.test.ts'],
@@ -23,8 +24,9 @@ module.exports = {
         'esbuild.config.mjs'
     ],
     coverageThreshold: {
+        global: { branches: 95, functions: 100, lines: 100, statements: 100 },
         './src/': {
-            branches: 65,
+            branches: 95,
             functions: 100,
             lines: 100,
             statements: 100

@@ -1,5 +1,5 @@
 # vscode
-.vscode 
+.vscode
 
 # Intellij
 *.iml
@@ -17,3 +17,5 @@ data.json
 # Exclude macOS Finder (System Explorer) View States
 .DS_Store
 coverage/
+# Generated release bundle (build and attach through GitHub Releases)
+/main.js
