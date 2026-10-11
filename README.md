@@ -2,8 +2,13 @@
 
 ![CI](https://github.com/kmsk99/kr-book-info-plugin/actions/workflows/ci.yml/badge.svg)
 
--   This plugin imports the book information of Yes24 into Front Matter in the document.
--   이 플러그인은 예스24의 책 정보를 문서 내 프론트매터로 가져옵니다.
+Obsidian 노트에 YES24 도서 정보와 표지를 가져오는 플러그인입니다. 제목·저자·ISBN으로 책을 찾고, 원하는 판본을 선택해 독서 노트의 속성을 채웁니다.
+
+[Obsidian에서 열기](obsidian://show-plugin?id=kr-book-info-plugin) · [릴리스](https://github.com/kmsk99/kr-book-info-plugin/releases) · [English](#english)
+
+## 설치
+
+Obsidian의 **설정 → 커뮤니티 플러그인 → 탐색**에서 `Korean Book Info`를 검색해 설치하고 활성화하세요. Obsidian 1.8.0 이상이 필요하며 YES24 계정이나 API 키는 필요하지 않습니다.
 
 ## 사용 방법 (1.5.0)
 
@@ -26,18 +31,6 @@
 YES24의 검색 API와 상세 페이지 구조에 의존합니다. 검색 API는 HTML 조각을 담은
 JSON을 반환하며, 상세정보는 JSON-LD를 우선 사용합니다.
 [조사 및 검증 기록](docs/yes24-integration.md)
-
-## 개발
-
-```sh
-pnpm install --frozen-lockfile
-pnpm test
-pnpm build
-```
-
-`main.js`, `manifest.json`, `styles.css`가 배포 파일입니다. `1.5.0`처럼 manifest 버전과
-일치하는 태그를 푸시하면 테스트·빌드를 거쳐 **초안 릴리스**가 생성됩니다.
-Obsidian에서 검증한 뒤 릴리스 노트를 확인하고 게시하세요.
 
 ## 저장되는 정보 예시
 
@@ -72,7 +65,20 @@ The plugin sends search terms to YES24. No account or API key is required.
 YES24 can change its unofficial endpoints or page structure; see the linked research
 and verification notes for the current assumptions and test scope.
 
-## Tests
+## 개발과 검증
+
+```sh
+pnpm install --frozen-lockfile
+pnpm test
+pnpm build
+```
+
+`main.js`, `manifest.json`, `styles.css`가 배포 파일입니다. `1.5.0`처럼 manifest 버전과
+일치하는 태그를 푸시하면 테스트·빌드를 거쳐 **초안 릴리스**가 생성됩니다.
+Obsidian에서 검증한 뒤 릴리스 노트를 확인하고 게시하세요.
+
+<details>
+<summary>테스트 범위와 개발 명령</summary>
 
 97 unit, integration and release bundle tests cover recorded YES24 responses, selection/cancellation,
 request failures, persistence and collisions. Coverage thresholds cover main.ts and src/ at
@@ -83,3 +89,5 @@ recorded separately in the verification notes.
 pnpm exec jest --watch
 pnpm run dev
 ```
+
+</details>
